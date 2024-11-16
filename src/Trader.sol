@@ -26,7 +26,8 @@ contract Trader {
         uint256 price;
         uint256 timestamp;
         bool isFulfilled;
-        bool isBuyerApproved;
+        bool isBuyerPaymentApproved;
+        bool isSellerAccepted;
         bool isCancelled;
         bool isDisputed;
     }
@@ -90,7 +91,8 @@ contract Trader {
             price: listings[_listingIndex].price,
             timestamp: block.timestamp,
             isFulfilled: false,
-            isBuyerApproved: false,
+            isBuyerPaymentApproved: false,
+            isSellerAccepted: false,
             isCancelled: false,
             isDisputed: false
         });
@@ -104,20 +106,28 @@ contract Trader {
         return order.index;
     }
 
+    function acceptOrderAsSeller(uint256 _index) public {
+        Order storage order = orders[_index];
+        require(listings[order.listingIndex].seller == msg.sender, "You are not the seller of this order");
+        order.isSellerAccepted = true;
+    }
+
     function cancelOrder(uint256 _index) public  {
         Order storage order = orders[_index];
         require(order.buyer == msg.sender || listings[order.listingIndex].seller == msg.sender, "You are not the buyer or seller of this order");
         order.isCancelled = true;
     }
 
-    function approveOrder(uint256 _index) public {
+    function approvePaymentAsBuyer(uint256 _index) public {
         Order storage order = orders[_index];
+        require(order.isSellerAccepted, "Seller has not accepted the order");
         require(order.buyer == msg.sender, "You are not the buyer of this order");
-        order.isBuyerApproved = true;
+        order.isBuyerPaymentApproved = true;
     }
 
     function disputeOrder(uint256 _index) public {
         Order storage order = orders[_index];
+        require(order.isSellerAccepted, "Seller has not accepted the order");
         require(order.buyer == msg.sender || listings[order.listingIndex].seller == msg.sender, "You are not the buyer or seller of this order");
 
         listings[order.listingIndex].isActive = true;

@@ -28,9 +28,12 @@ contract TraderScript is Script {
         uint256 orderIndex = trader.initiateOrder(0, address(0), 10 ether);
         console.log("orderIndex", orderIndex);
 
+        vm.prank(seller);
+        trader.acceptOrderAsSeller(orderIndex);
+
         vm.prank(buyer);
         // chatting and setting fiat offchain
-        trader.approveOrder(orderIndex);
+        trader.approvePaymentAsBuyer(orderIndex);
         console.log("seller balance", address(seller).balance);
 
         // seller
